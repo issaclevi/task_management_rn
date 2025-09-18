@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Replace with your OneSignal App ID -->
+    <string name="onesignal_app_id">YOUR_ONESIGNAL_APP_ID</string>
+    <!-- Replace with your Google Project Number -->
+    <string name="onesignal_google_project_number">YOUR_GOOGLE_PROJECT_NUMBER</string>
+</resources>
