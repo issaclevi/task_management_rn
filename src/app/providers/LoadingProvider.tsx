@@ -142,7 +142,6 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
   );
 };
 
-// Loading overlay component
 const LoadingOverlay: React.FC = () => {
   const { loading, hideLoading } = useLoading();
 
@@ -287,7 +286,6 @@ export const withAutoLoading = <P extends object>(
     React.useEffect(() => {
       showLoading(loadingMessage || 'Loading...');
       
-      // Simulate component mount delay
       const timer = setTimeout(() => {
         setMounted(true);
         hideLoading();
@@ -310,7 +308,6 @@ export const withAutoLoading = <P extends object>(
   return WrappedComponent;
 };
 
-// Hook for async operations with loading
 export const useAsyncOperation = () => {
   const { withLoading } = useLoading();
 

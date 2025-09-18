@@ -68,11 +68,9 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
 
     setToasts(prev => {
       const updated = [newToast, ...prev];
-      // Limit number of toasts
       return updated.slice(0, maxToasts);
     });
 
-    // Auto-hide toast after duration (unless persistent)
     if (!newToast.persistent && newToast.duration && newToast.duration > 0) {
       setTimeout(() => {
         hideToast(id);

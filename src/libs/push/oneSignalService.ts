@@ -3,6 +3,7 @@ import { LogLevel, OneSignal } from 'react-native-onesignal';
 import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../api/client';
+import Config from 'react-native-config';
 
 export interface NotificationData {
   title: string;
@@ -17,57 +18,44 @@ export interface PushToken {
 
 class OneSignalService {
   private isInitialized = false;
-  private appId: string = '391717f6-e570-4671-9ea0-bf58db95a048';
+  private appId: string = `${Config.ONESIGNAL_APP_ID}`;
   private navigationRef: any = null;
 
   // Initialize OneSignal
   async initialize(appId: string): Promise<void> {
     try {
-      console.log('🔔 Initializing OneSignal with App ID:', appId);
-
-      // Initialize OneSignal
+      console.log('Initializing OneSignal with App ID:', appId);
       OneSignal.initialize(appId);
 
-      // Set log level for debugging
       OneSignal.Debug.setLogLevel(LogLevel.Verbose);
-
-      // Request notification permissions
       const hasPermission = await OneSignal.Notifications.requestPermission(true);
-      console.log('🔔 OneSignal permission granted:', hasPermission);
 
-      // Setup notification click handler
       OneSignal.Notifications.addEventListener('click', (event) => {
-        console.log('🔔 OneSignal notification clicked:', event);
         const { additionalData } = event.notification;
 
         if (additionalData && (additionalData as any)?.type) {
           const { type, taskId } = additionalData as any;
-          console.log('🔔 Notification type:', type, 'taskId:', taskId);
 
-          // Handle navigation based on notification type
           this.handleNotificationNavigation(type, taskId);
         }
       });
 
-      // Setup notification received handler
       OneSignal.Notifications.addEventListener('foregroundWillDisplay', (event) => {
-        console.log('🔔 OneSignal notification received in foreground:', event);
-        // Display the notification
         event.getNotification().display();
       });
 
       await new Promise(resolve => setTimeout(resolve, 1000));
       this.isInitialized = true;
-      console.log('✅ OneSignal initialized successfully');
+      console.log('OneSignal initialized successfully');
 
       const initialToken = await this.getPushToken();
       if (initialToken) {
-        console.log('✅ Initial OneSignal token available:', initialToken);
+        console.log('Initial OneSignal token available:', initialToken);
       } else {
         console.log('⚠️ OneSignal token not immediately available, will retry later');
       }
     } catch (error) {
-      console.error('❌ Error initializing OneSignal:', error);
+      console.error('Error initializing OneSignal:', error);
       throw error;
     }
   }
@@ -84,12 +72,10 @@ class OneSignalService {
       const pushSubscriptionId = await OneSignal.User.pushSubscription.getIdAsync();
       const isOptedIn = await OneSignal.User.pushSubscription.getOptedInAsync();
 
-      console.log('🔔 OneSignal IDs:', { onesignalId, pushSubscriptionId, isOptedIn });
-
       if (pushSubscriptionId && isOptedIn) {
 
         const token: PushToken = {
-          token: pushSubscriptionId, // Use push subscription ID, not user ID
+          token: pushSubscriptionId,
           platform: Platform.OS as 'ios' | 'android',
         };
 
@@ -97,14 +83,14 @@ class OneSignalService {
 
         if (userId) {
           try {
-            console.log('🔔 Registering OneSignal token with backend:', token.token);
+            console.log('Registering OneSignal token with backend:', token.token);
             const response = await api.post('/api/devices/register', {
               token: token.token,
               platform: token.platform,
             });
-            console.log('✅ Token registration response:', response.data);
+            console.log('Token registration response:', response.data);
           } catch (err) {
-            console.error('❌ Failed saving token to DB:', err);
+            console.error('Failed saving token to DB:', err);
           }
         } else {
           console.warn('⚠️ No userId provided, token only saved locally');
@@ -120,36 +106,6 @@ class OneSignalService {
       return null;
     }
   }
-
-  // Register push token with backend
-  // async registerPushToken(userId: string): Promise<boolean> {
-  //   try {
-  //     const token = await this.getPushToken();
-  //     if (!token) {
-  //       throw new Error('No push token available');
-  //     }
-
-  //     await AsyncStorage.setItem('push_token', JSON.stringify(token));
-
-
-  //     await api.post('/api/devices/register', {
-  //       token: token.token,
-  //       platform: token.platform,
-  //       user_id: userId,
-  //     });
-
-  //     console.log('✅ Push token registered with backend:', {
-  //       userId,
-  //       onesignalId: token.token,
-  //       platform: token.platform,
-  //     });
-
-  //     return true;
-  //   } catch (error) {
-  //     console.error('Error registering push token:', error);
-  //     return false;
-  //   }
-  // }
 
   // Unregister push token
   async unregisterPushToken(): Promise<void> {
@@ -180,7 +136,6 @@ class OneSignalService {
     }
   }
 
-  // Schedule local notification
   async scheduleLocalNotification(
     title: string,
     body: string,
@@ -199,7 +154,6 @@ class OneSignalService {
     }
   }
 
-  // Set user tags for targeting
   async setUserTags(tags: Record<string, string>): Promise<void> {
     try {
       if (!this.isInitialized) {
@@ -235,7 +189,6 @@ class OneSignalService {
         return;
       }
 
-      // Get the OneSignal ID and check subscription status
       const onesignalId = await OneSignal.User.getOnesignalId();
       const pushSubscriptionId = await OneSignal.User.pushSubscription.getIdAsync();
       const isOptedIn = await OneSignal.User.pushSubscription.getOptedInAsync();
@@ -252,7 +205,7 @@ class OneSignalService {
         return;
       }
 
-      console.log('🔔 Registering OneSignal token for user:', userId, 'with push subscription ID:', pushSubscriptionId);
+      console.log('Registering OneSignal token for user:', userId, 'with push subscription ID:', pushSubscriptionId);
 
       // Register with backend
       const response = await api.post('/api/devices/register', {
@@ -261,17 +214,16 @@ class OneSignalService {
       });
 
       if (response.data.success) {
-        console.log('✅ Device token registered successfully');
+        console.log('Device token registered successfully');
         await AsyncStorage.setItem('onesignal_registered', 'true');
       } else {
-        console.error('❌ Failed to register device token:', response.data.message);
+        console.error('Failed to register device token:', response.data.message);
       }
     } catch (error) {
-      console.error('❌ Error registering device token:', error);
+      console.error('Error registering device token:', error);
     }
   }
 
-  // Set external user ID and register token
   async setExternalUserId(userId: string): Promise<void> {
     try {
       if (!this.isInitialized) {
@@ -280,8 +232,6 @@ class OneSignalService {
 
       OneSignal.login(userId);
       console.log('External user ID set:', userId);
-
-      // Register device token after setting user ID
       await this.registerDeviceToken(userId);
     } catch (error) {
       console.error('Error setting external user ID:', error);
@@ -378,8 +328,6 @@ class OneSignalService {
 
 export const oneSignalService = new OneSignalService();
 
-// Convenience functions for backward compatibility
-// export const registerPushToken = (userId: string) => oneSignalService.registerPushToken(userId);
 export const unregisterPushToken = () => oneSignalService.unregisterPushToken();
 export const sendLocalNotification = (title: string, body: string, data?: Record<string, any>) =>
   oneSignalService.sendLocalNotification(title, body, data);
