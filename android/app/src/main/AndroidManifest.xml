@@ -24,12 +24,7 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:supportsRtl="true">
-    <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyC00laB3YlQaU9BH-HqVUDwWnvklx2S7eU"/>
-            <meta-data
-            android:name="com.onesignal.app_id"
-            android:value="391717f6-e570-4671-9ea0-bf58db95a048" />
+   
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
